@@ -14,7 +14,8 @@
     <title>Map1</title>
 </head>
 <body>
-    <div id='map'></div>
+    <div id="map"></div>
+    <div id="additionalDropdownContainer"></div>
     <script type="text/javascript">
         var map = L.map('map', {
             fullscreenControl: true,
@@ -23,7 +24,7 @@
                 titleCancel: "Exit fullscreen mode"
             }
         }).setView([62.62357822995269, 6.568337702605886], 9);
-    
+
         var OSmap = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
@@ -32,13 +33,13 @@
 
         var Imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution:'&copy; <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank">ESRI</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
+            attribution: '&copy; <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank">ESRI</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
             opacity: 1
         });
 
         var TopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution:'&copy; <a href = "https://opentopomap.org/credits" target = "_blank">OpenTopoMap</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
+            attribution: '&copy; <a href = "https://opentopomap.org/credits" target = "_blank">OpenTopoMap</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
             opacity: 0.5
         });
 
@@ -161,7 +162,6 @@
 
         // Add the initial radio button layer
         overlayLayers[Object.keys(overlayLayers)[0]].addTo(map);
-        console.log("adding first overlay layer by default to map")
 
         // Define the dictionary for coordinates and zoom levels
         var layerViewSettings = {
@@ -174,128 +174,260 @@
             "Pisek": { center: [49.28765927177321, 14.167823590584321], zoom: 12 },
             "Rijeka": { center: [44.97243541294297, 14.623684506249385], zoom: 8 },
             "Rimini": { center: [43.96190532408524, 12.423399060233246], zoom: 10 }
-            // Add other layers' view settings here
         };
 
-        async function loadExtents(layerName) {
-            const response = await fetch(`${layerName}/extents.json`);
-            const extents = await response.json();
-            return extents;
-        }
-
-        async function updateDropdownLayers(layerName) {
-            const extents = await loadExtents(layerName);
-            const basePath = `${layerName}/png/`;
-            dropdownLayers = {};
-
-            for (const [key, value] of Object.entries(extents)) {
-                console.log(key)
-                const imageUrl = `${basePath}${key}.png`;
-                const imageBounds = value;
-                console.log(imageBounds)
-                const imageLayer = L.imageOverlay(imageUrl, imageBounds);
-                dropdownLayers[key] = imageLayer;
-            }
-
-            // Update dropdown menu
-            const dropdown = document.getElementById('dropdownLayer');
-            dropdown.innerHTML = '<option value="">Select a layer</option>';
-
-            for (const layer in dropdownLayers) {
-                const option = document.createElement('option');
-                option.value = layer;
-                option.textContent = layer;
-                dropdown.appendChild(option);
+        async function fetchExtents(path) {
+            try {
+                const response = await fetch(path);
+                const extents = await response.json();
+                return extents;
+            } catch (error) {
+                console.error('Error fetching extents:', error);
+                return {};
             }
         }
 
-        var dropdownLayers = {};
-        updateDropdownLayers(Object.keys(overlayLayers)[0])
+        let currentOverlay = null;
+
+        async function updateMapWithPng(path, pngFileName) {
+            if (currentOverlay) {
+                map.removeLayer(currentOverlay);
+            }
+
+            const extents = await fetchExtents(`${path}/extents.json`);
+            const extent = extents[`${pngFileName}`];
+            console.log(extent)
+            if (extent) {
+                currentOverlay = L.imageOverlay(`${path}/${pngFileName}.png`, extent).addTo(map);
+                map.fitBounds(extent);
+
+                // Apply CSS styling to render the image as pixelated
+                currentOverlay.getElement().style.imageRendering = 'pixelated';
+            }
+        }
+
+
+        async function fetchFolders(path) {
+            try {
+                const response = await fetch(path);
+                const responseText = await response.text();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    if (contentType.includes('text/html')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(responseText, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a'));
+                        const folders = links
+                            .map(link => link.textContent)
+                            .filter(name => name.endsWith('/'))
+                            .map(name => name.slice(0, -1));
+                        return folders;
+                    } else {
+                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
+                    }
+                }
+                const folders = JSON.parse(responseText);
+                return folders;
+            } catch (error) {
+                console.error('Error fetching or parsing folders:', error);
+                return [];
+            }
+        }
+
+        async function fetchFiles(path) {
+            try {
+                const response = await fetch(path);
+                const responseText = await response.text();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    if (contentType.includes('text/html')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(responseText, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a'));
+                        const files = links.map(link => link.textContent);
+                        return files;
+                    } else {
+                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
+                    }
+                }
+                const files = JSON.parse(responseText);
+                return files;
+            } catch (error) {
+                console.error('Error fetching or parsing files:', error);
+                return [];
+            }
+        }
+
+        function updateDropdownOptions(dropdown, options, title) {
+            dropdown.innerHTML = `<option value="">${title}</option>`;
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
+                dropdown.appendChild(opt);
+            });
+        }
+
+
+        async function updateFolderDropdown(layerName) {
+            const folders = await fetchFolders(`${layerName}`);
+            const dropdown = document.getElementById('folderDropdown');
+            updateDropdownOptions(dropdown, folders, 'Select a category');
+        }
+
+        async function updateFileOrSubcategoryDropdown(path) {
+            const files = await fetchFiles(path);
+            const pngFiles = files.filter(file => file.endsWith('.png'));
+            const subfolders = files.filter(file => file.endsWith('/')).map(name => name.slice(0, -1));
+
+            const container = document.getElementById('additionalDropdownContainer');
+            container.innerHTML = '';
+
+            const label = document.createElement('div');
+            label.textContent = pngFiles.length > 0 ? 'Data' : 'Subcategory';
+            label.style.marginTop = '10px'; // Add some margin for spacing
+            container.appendChild(label);
+
+            const dropdown = document.createElement('select');
+            dropdown.id = 'additionalDropdown';
+
+            if (pngFiles.length > 0) {
+                updateDropdownOptions(dropdown, pngFiles, 'Select an option');
+            } else {
+                updateDropdownOptions(dropdown, subfolders, 'Select a subcategory');
+            }
+
+            container.appendChild(dropdown);
+
+            if (subfolders.length > 0) {
+                dropdown.addEventListener('change', function () {
+                    const selectedSubfolder = this.value;
+                    if (selectedSubfolder) {
+                        updatePngFilesDropdown(`${path}/${selectedSubfolder}`);
+                    }
+                });
+            }
+        }
+
+        async function updatePngFilesDropdown(path) {
+            const files = await fetchFiles(path);
+            const pngFiles = files.filter(file => file.endsWith('.png'));
+
+            const container = document.getElementById('pngFilesDropdownContainer');
+            if (!container) {
+                const newContainer = document.createElement('div');
+                newContainer.id = 'pngFilesDropdownContainer';
+                newContainer.style.marginTop = '10px';
+
+                const label = document.createElement('div');
+                label.textContent = 'Data';
+                newContainer.appendChild(label);
+
+                const dropdown = document.createElement('select');
+                dropdown.id = 'pngFilesDropdown';
+                updateDropdownOptions(dropdown, pngFiles.map(file => file.slice(0, -4)), 'Select data');
+
+                dropdown.addEventListener('change', function () {
+                    const selectedPngFile = this.value;
+                    if (selectedPngFile) {
+                        updateMapWithPng(path, selectedPngFile);
+                    }
+                });
+
+                newContainer.appendChild(dropdown);
+                document.getElementById('additionalDropdownContainer').appendChild(newContainer);
+            } else {
+                container.innerHTML = '';
+                const label = document.createElement('div');
+                label.textContent = 'Data';
+                container.appendChild(label);
+
+                const dropdown = document.createElement('select');
+                dropdown.id = 'pngFilesDropdown';
+                updateDropdownOptions(dropdown, pngFiles.map(file => file.slice(0, -4)), 'Select data');
+
+                dropdown.addEventListener('change', function () {
+                    const selectedPngFile = this.value;
+                    if (selectedPngFile) {
+                        updateMapWithPng(path, selectedPngFile);
+                    }
+                });
+
+                container.appendChild(dropdown);
+            }
+        }
+
 
         var overlayControl = L.control({ position: 'topright' });
 
         overlayControl.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'info legend');
-            
-            // Add a white background with padding and border
             div.style.backgroundColor = 'white';
             div.style.padding = '10px';
             div.style.border = '2px solid #ccc';
             div.style.borderRadius = '5px';
 
-            // Create radio button section
             for (var i = 0; i < Object.keys(overlayLayers).length; i++) {
                 var layerName = Object.keys(overlayLayers)[i];
-                var checkedAttribute = i === 0 ? 'checked' : '';  // Add 'checked' for the first layer
+                var checkedAttribute = i === 0 ? 'checked' : '';
 
                 div.innerHTML +=
                     '<input type="radio" name="layer" value="' + layerName + '" id="' + layerName + '" ' + checkedAttribute +
                     ' title="Switch to ' + layerName + '">' +
                     '<label for="' + layerName + '" title="Switch to ' + layerName + '">' + layerName + '</label><br>';
             }
-            
-            // Create dropdown menu section
-            div.innerHTML += '<br><label for="dropdownLayer">Additional Layers:</label><br>';
-            var select = L.DomUtil.create('select', '', div);
-            select.id = 'dropdownLayer';
 
-            var defaultOption = L.DomUtil.create('option', '', select);
-            defaultOption.value = "";
-            defaultOption.text = "Select a layer";
-            
-            for (var layerName in dropdownLayers) {
-                if (dropdownLayers.hasOwnProperty(layerName)) {
-                    var option = L.DomUtil.create('option', '', select);
-                    option.value = layerName;
-                    option.text = layerName;
-                }
-            }
+            div.innerHTML += '<br><label for="folderDropdown">Category:</label><br>';
+            var select = L.DomUtil.create('select', '', div);
+            select.id = 'folderDropdown';
+            select.innerHTML = '<option value="">Select a category</option>';
+
+            select.addEventListener('change', function () {
+                const selectedOption = this.value;
+                const selectedLayer = document.querySelector('input[name="layer"]:checked').value;
+                const path = `${selectedLayer}/${selectedOption}`;
+                updateFileOrSubcategoryDropdown(path);
+            });
 
             div.addEventListener('change', function (e) {
-                var selectedLayer = e.target.value;
-
-                // Handle dropdown change
-                if (e.target.id === 'dropdownLayer') {
-                    // Remove all dropdown layers
-                    for (var layerName in dropdownLayers) {
-                        if (dropdownLayers.hasOwnProperty(layerName)) {
-                            map.removeLayer(dropdownLayers[layerName]);
-                        }
-                    }
-                    // Add the selected dropdown layer
-                    if (dropdownLayers[selectedLayer]) {
-                        dropdownLayers[selectedLayer].addTo(map);
-                        console.log("adding dropdown layer to the map")
-                    }
-                }
-
-                // Handle radio button change
                 if (e.target.name === 'layer') {
+                    var selectedLayer = e.target.value;
+
                     for (var layerName in overlayLayers) {
                         if (overlayLayers.hasOwnProperty(layerName) && layerName !== selectedLayer) {
                             map.removeLayer(overlayLayers[layerName]);
                         }
                     }
                     overlayLayers[selectedLayer].addTo(map);
-                    console.log("adding overlay layer to map")
 
-                    // Set the map view based on the selected layer
                     if (layerViewSettings[selectedLayer]) {
                         map.setView(layerViewSettings[selectedLayer].center, layerViewSettings[selectedLayer].zoom);
                     }
 
-                    // Update dropdown layers
-                    updateDropdownLayers(selectedLayer);
+                    updateFolderDropdown(selectedLayer);
                 }
             });
+
+            var additionalDropdownContainer = L.DomUtil.create('div', '', div);
+            additionalDropdownContainer.id = 'additionalDropdownContainer';
+            additionalDropdownContainer.style.marginTop = '10px'; // Add some margin for spacing
 
             return div;
         };
 
-        L.control.layers(baseLayers).addTo(map);
 
-        // Add the custom control to the map
+
+
+        L.control.layers(baseLayers).addTo(map);
         overlayControl.addTo(map);
+        updateFolderDropdown(Object.keys(overlayLayers)[0]);
+
     </script>
 </body>
 </html>
