@@ -196,7 +196,7 @@
 
             const extents = await fetchExtents(`${path}/extents.json`);
             const extent = extents[`${pngFileName}`];
-            console.log(extent)
+
             if (extent) {
                 currentOverlay = L.imageOverlay(`${path}/${pngFileName}.png`, extent).addTo(map);
                 map.fitBounds(extent);
@@ -208,10 +208,8 @@
 
 
         async function fetchFolders(path) {
-            const url = `${path}/`;
-            console.log('Fetching folders from URL:', url); // Debug log
             try {
-                const response = await fetch(url);
+                const response = await fetch(path);
                 const responseText = await response.text();
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -240,10 +238,8 @@
         }
 
         async function fetchFiles(path) {
-            const url = `${path}/`;
-            console.log('Fetching files from URL:', url); // Debug log
             try {
-                const response = await fetch(url);
+                const response = await fetch(path);
                 const responseText = await response.text();
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -268,19 +264,23 @@
             }
         }
 
+        function updateDropdownOptions(dropdown, options, title) {
+            dropdown.innerHTML = `<option value="">${title}</option>`;
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
+                dropdown.appendChild(opt);
+            });
+        }
 
 
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(layerName);
+            const folders = await fetchFolders(`${layerName}`);
+            console.log(folders);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            updateFolderDropdown(Object.keys(overlayLayers)[0]);
-        });
-
-
 
         async function updateFileOrSubcategoryDropdown(path) {
             const files = await fetchFiles(path);
@@ -315,17 +315,6 @@
                 });
             }
         }
-
-        function updateDropdownOptions(dropdown, options, title) {
-            dropdown.innerHTML = `<option value="">${title}</option>`;
-            options.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option;
-                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
-                dropdown.appendChild(opt);
-            });
-        }
-
 
         async function updatePngFilesDropdown(path) {
             const files = await fetchFiles(path);
@@ -375,11 +364,6 @@
             }
         }
 
-        // Example usage:
-        document.addEventListener('DOMContentLoaded', function () {
-            updateFolderDropdown(Object.keys(overlayLayers)[0]);
-        });
-
 
         var overlayControl = L.control({ position: 'topright' });
 
@@ -415,6 +399,7 @@
             div.addEventListener('change', function (e) {
                 if (e.target.name === 'layer') {
                     var selectedLayer = e.target.value;
+                    console.log(selectedLayer)
 
                     for (var layerName in overlayLayers) {
                         if (overlayLayers.hasOwnProperty(layerName) && layerName !== selectedLayer) {
