@@ -208,6 +208,7 @@
 
 
         async function fetchFolders(path) {
+            console.log('Fetching folders from path:', path); // Debug log
             try {
                 const response = await fetch(path);
                 const responseText = await response.text();
@@ -238,6 +239,7 @@
         }
 
         async function fetchFiles(path) {
+            console.log('Fetching files from path:', path); // Debug log
             try {
                 const response = await fetch(path);
                 const responseText = await response.text();
@@ -263,18 +265,6 @@
                 return [];
             }
         }
-
-
-        function updateDropdownOptions(dropdown, options, title) {
-            dropdown.innerHTML = `<option value="">${title}</option>`;
-            options.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option;
-                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
-                dropdown.appendChild(opt);
-            });
-        }
-
 
         async function updateFolderDropdown(layerName) {
             const folders = await fetchFolders(`${layerName}`);
@@ -363,6 +353,11 @@
                 container.appendChild(dropdown);
             }
         }
+
+        // Example usage:
+        document.addEventListener('DOMContentLoaded', function () {
+            updateFolderDropdown(Object.keys(overlayLayers)[0]);
+        });
 
 
         var overlayControl = L.control({ position: 'topright' });
