@@ -208,7 +208,7 @@
 
 
         async function fetchFolders(path) {
-            const url = `https://sklibad.github.io/re-value-project/${path}/`;
+            const url = `${path}/`;
             console.log('Fetching folders from URL:', url); // Debug log
             try {
                 const response = await fetch(url);
@@ -240,7 +240,7 @@
         }
 
         async function fetchFiles(path) {
-            const url = `https://sklibad.github.io/re-value-project/${path}/`;
+            const url = `${path}/`;
             console.log('Fetching files from URL:', url); // Debug log
             try {
                 const response = await fetch(url);
@@ -269,6 +269,7 @@
         }
 
 
+
         async function updateFolderDropdown(layerName) {
             const folders = await fetchFolders(layerName);
             const dropdown = document.getElementById('folderDropdown');
@@ -278,6 +279,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             updateFolderDropdown(Object.keys(overlayLayers)[0]);
         });
+
 
 
         async function updateFileOrSubcategoryDropdown(path) {
