@@ -208,9 +208,10 @@
 
 
         async function fetchFolders(path) {
-            console.log('Fetching folders from path:', path); // Debug log
+            const url = `https://sklibad.github.io/re-value-project/${path}/`;
+            console.log('Fetching folders from URL:', url); // Debug log
             try {
-                const response = await fetch(path);
+                const response = await fetch(url);
                 const responseText = await response.text();
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -239,9 +240,10 @@
         }
 
         async function fetchFiles(path) {
-            console.log('Fetching files from path:', path); // Debug log
+            const url = `https://sklibad.github.io/re-value-project/${path}/`;
+            console.log('Fetching files from URL:', url); // Debug log
             try {
-                const response = await fetch(path);
+                const response = await fetch(url);
                 const responseText = await response.text();
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -266,11 +268,17 @@
             }
         }
 
+
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(`${layerName}`);
+            const folders = await fetchFolders(layerName);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateFolderDropdown(Object.keys(overlayLayers)[0]);
+        });
+
 
         async function updateFileOrSubcategoryDropdown(path) {
             const files = await fetchFiles(path);
@@ -305,6 +313,17 @@
                 });
             }
         }
+
+        function updateDropdownOptions(dropdown, options, title) {
+            dropdown.innerHTML = `<option value="">${title}</option>`;
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
+                dropdown.appendChild(opt);
+            });
+        }
+
 
         async function updatePngFilesDropdown(path) {
             const files = await fetchFiles(path);
