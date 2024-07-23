@@ -276,14 +276,14 @@
 
 
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(`${layerName}`);
+            const folders = await fetchFolders(`tree/main/${layerName}`);
             console.log(folders);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
 
         async function updateFileOrSubcategoryDropdown(path) {
-            const files = await fetchFiles(path);
+            const files = await fetchFiles(`tree/main/${path}`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
             const subfolders = files.filter(file => file.endsWith('/')).map(name => name.slice(0, -1));
 
@@ -310,14 +310,14 @@
                 dropdown.addEventListener('change', function () {
                     const selectedSubfolder = this.value;
                     if (selectedSubfolder) {
-                        updatePngFilesDropdown(`${path}/${selectedSubfolder}`);
+                        updatePngFilesDropdown(`tree/main/${path}/${selectedSubfolder}`);
                     }
                 });
             }
         }
 
         async function updatePngFilesDropdown(path) {
-            const files = await fetchFiles(path);
+            const files = await fetchFiles(`tree/main/${path}`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
 
             const container = document.getElementById('pngFilesDropdownContainer');
@@ -337,7 +337,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(path, selectedPngFile);
+                        updateMapWithPng(`tree/main/${path}`, selectedPngFile);
                     }
                 });
 
@@ -356,7 +356,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(path, selectedPngFile);
+                        updateMapWithPng(`tree/main/${path}`, selectedPngFile);
                     }
                 });
 
@@ -422,9 +422,6 @@
 
             return div;
         };
-
-
-
 
         L.control.layers(baseLayers).addTo(map);
         overlayControl.addTo(map);
