@@ -195,7 +195,7 @@
             }
 
             const extents = await fetchExtents(`${path}/extents.json`);
-            const extent = extents[`${pngFileName}`];
+            const extent = extents[pngFileName];
 
             if (extent) {
                 currentOverlay = L.imageOverlay(`${path}/${pngFileName}.png`, extent).addTo(map);
@@ -213,22 +213,13 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    if (contentType.includes('text/html')) {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(responseText, 'text/html');
-                        const links = Array.from(doc.querySelectorAll('a'));
-                        const folders = links
-                            .map(link => link.textContent)
-                            .filter(name => name.endsWith('/'))
-                            .map(name => name.slice(0, -1));
-                        return folders;
-                    } else {
-                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
-                    }
-                }
-                const folders = JSON.parse(responseText);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(responseText, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
+                const folders = links
+                    .map(link => link.textContent)
+                    .filter(name => name.endsWith('/'))
+                    .map(name => name.slice(0, -1));
                 return folders;
             } catch (error) {
                 console.error('Error fetching or parsing folders:', error);
@@ -243,19 +234,10 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    if (contentType.includes('text/html')) {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(responseText, 'text/html');
-                        const links = Array.from(doc.querySelectorAll('a'));
-                        const files = links.map(link => link.textContent);
-                        return files;
-                    } else {
-                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
-                    }
-                }
-                const files = JSON.parse(responseText);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(responseText, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
+                const files = links.map(link => link.textContent);
                 return files;
             } catch (error) {
                 console.error('Error fetching or parsing files:', error);
@@ -274,14 +256,14 @@
         }
 
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(`https://sklibad.github.io/re-value-project/${layerName}`);
+            const folders = await fetchFolders(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${layerName}/`);
             console.log(folders);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
 
         async function updateFileOrSubcategoryDropdown(path) {
-            const files = await fetchFiles(`https://sklibad.github.io/re-value-project/${path}`);
+            const files = await fetchFiles(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${path}/`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
             const subfolders = files.filter(file => file.endsWith('/')).map(name => name.slice(0, -1));
 
@@ -308,14 +290,14 @@
                 dropdown.addEventListener('change', function () {
                     const selectedSubfolder = this.value;
                     if (selectedSubfolder) {
-                        updatePngFilesDropdown(`https://sklibad.github.io/re-value-project/${path}/${selectedSubfolder}`);
+                        updatePngFilesDropdown(`${path}/${selectedSubfolder}`);
                     }
                 });
             }
         }
 
         async function updatePngFilesDropdown(path) {
-            const files = await fetchFiles(`https://sklibad.github.io/re-value-project/${path}`);
+            const files = await fetchFiles(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${path}/`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
 
             const container = document.getElementById('pngFilesDropdownContainer');
@@ -335,7 +317,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(`https://sklibad.github.io/re-value-project/${path}`, selectedPngFile);
+                        updateMapWithPng(path, selectedPngFile);
                     }
                 });
 
@@ -354,7 +336,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(`https://sklibad.github.io/re-value-project/${path}`, selectedPngFile);
+                        updateMapWithPng(path, selectedPngFile);
                     }
                 });
 
@@ -396,7 +378,7 @@
             div.addEventListener('change', function (e) {
                 if (e.target.name === 'layer') {
                     var selectedLayer = e.target.value;
-                    console.log(selectedLayer)
+                    console.log(selectedLayer);
 
                     for (var layerName in overlayLayers) {
                         if (overlayLayers.hasOwnProperty(layerName) && layerName !== selectedLayer) {
