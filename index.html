@@ -275,14 +275,14 @@
         }
 
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(`https://github.com/sklibad/re-value-project/tree/main/${layerName}`);
+            const folders = await fetchFolders(`https://sklibad.github.io/re-value-project/${layerName}`);
             console.log(folders);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
 
         async function updateFileOrSubcategoryDropdown(path) {
-            const files = await fetchFiles(`https://github.com/sklibad/re-value-project/tree/main/${path}`);
+            const files = await fetchFiles(`https://sklibad.github.io/re-value-project/${path}`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
             const subfolders = files.filter(file => file.endsWith('/')).map(name => name.slice(0, -1));
 
@@ -309,14 +309,14 @@
                 dropdown.addEventListener('change', function () {
                     const selectedSubfolder = this.value;
                     if (selectedSubfolder) {
-                        updatePngFilesDropdown(`https://github.com/sklibad/re-value-project/tree/main/${path}/${selectedSubfolder}`);
+                        updatePngFilesDropdown(`https://sklibad.github.io/re-value-project/${path}/${selectedSubfolder}`);
                     }
                 });
             }
         }
 
         async function updatePngFilesDropdown(path) {
-            const files = await fetchFiles(`https://github.com/sklibad/re-value-project/tree/main/${path}`);
+            const files = await fetchFiles(`https://sklibad.github.io/re-value-project/${path}`);
             const pngFiles = files.filter(file => file.endsWith('.png'));
 
             const container = document.getElementById('pngFilesDropdownContainer');
@@ -336,7 +336,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(`https://github.com/sklibad/re-value-project/tree/main/${path}`, selectedPngFile);
+                        updateMapWithPng(`https://sklibad.github.io/re-value-project/${path}`, selectedPngFile);
                     }
                 });
 
@@ -355,7 +355,7 @@
                 dropdown.addEventListener('change', function () {
                     const selectedPngFile = this.value;
                     if (selectedPngFile) {
-                        updateMapWithPng(`https://github.com/sklibad/re-value-project/tree/main/${path}`, selectedPngFile);
+                        updateMapWithPng(`https://sklibad.github.io/re-value-project/${path}`, selectedPngFile);
                     }
                 });
 
