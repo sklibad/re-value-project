@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="src/leaflet.legend.css" />
-    <link rel="stylesheet" href="map1.css" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="map1.css?v=1.1" />
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <script src="Control.FullScreen.js"></script>
-    <script src="map1.js" type="text/javascript"></script>
+    <script src="map1.js?v=1.1" type="text/javascript"></script>
     <script type="text/javascript" src="src/leaflet.legend.js"></script>
     <title>Map1</title>
 </head>
 <body>
     <div id="map"></div>
-    <div id="additionalDropdownContainer"></div>
+    <div id="popup" class="popup">
+        <label for="opacitySlider">Opacity:</label>
+        <input type="range" id="opacitySlider" min="0" max="1" step="0.01">
+    </div>
     <script type="text/javascript">
         var map = L.map('map', {
             fullscreenControl: true,
@@ -28,7 +33,7 @@
         var OSmap = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> | <a href="https://www.linkedin.com/in/david-skliba/?locale=en_US" target="_blank">David Šklíba</a>',
-            opacity: 1
+            opacity: 0.5
         }).addTo(map);
 
         var Imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -49,132 +54,42 @@
             "TopoMap": TopoMap
         };
 
-        var alesund = L.geoJSON(alesund, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var bruges = L.geoJSON(bruges, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var burgas = L.geoJSON(burgas, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var cascais = L.geoJSON(cascais, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var constanta = L.geoJSON(constanta, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var izmir = L.geoJSON(izmir, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var pisek = L.geoJSON(pisek, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var rijeka = L.geoJSON(rijeka, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
-        var rimini = L.geoJSON(rimini, {
-            style: function (feature) {
-                return {
-                    fillColor: "#C0C0C0",
-                    fillOpacity: 0,
-                    color: '#808080',
-                    weight: 3
-                };
-            }
-        });
-
         var overlayLayers = {
-            "Alesund": alesund,
-            "Cascais": cascais,
-            "Bruges": bruges,
-            "Burgas": burgas,
-            "Constanta": constanta,
-            "Izmir": izmir,
-            "Pisek": pisek,
-            "Rijeka": rijeka,
-            "Rimini": rimini
+            "Alesund": L.geoJSON(alesund, { style: getGeoJsonStyle() }),
+            "Cascais": L.geoJSON(cascais, { style: getGeoJsonStyle() }),
+            "Bruges": L.geoJSON(bruges, { style: getGeoJsonStyle() }),
+            "Burgas": L.geoJSON(burgas, { style: getGeoJsonStyle() }),
+            "Constanta": L.geoJSON(constanta, { style: getGeoJsonStyle() }),
+            "Izmir": L.geoJSON(izmir, { style: getGeoJsonStyle() }),
+            "Pisek": L.geoJSON(pisek, { style: getGeoJsonStyle() }),
+            "Rijeka": L.geoJSON(rijeka, { style: getGeoJsonStyle() }),
+            "Rimini": L.geoJSON(rimini, { style: getGeoJsonStyle() })
         };
 
-        // Add the initial radio button layer
-        overlayLayers[Object.keys(overlayLayers)[0]].addTo(map);
+        overlayLayers[Object.keys(overlayLayers)[0]].addTo(map)
 
-        // Define the dictionary for coordinates and zoom levels
+        function getGeoJsonStyle() {
+            return {
+                fillColor: "#C0C0C0",
+                fillOpacity: 0,
+                color: '#808080',
+                weight: 3
+            };
+        }
+
         var layerViewSettings = {
             "Alesund": { center: [62.62357822995269, 6.568337702605886], zoom: 9 },
             "Cascais": { center: [38.7246415419252, -9.398661627395064], zoom: 12 },
             "Bruges": { center: [51.26277668564624, 3.2157520267962854], zoom: 11 },
             "Burgas": { center: [42.52365465796975, 27.412133356605594], zoom: 10 },
             "Constanta": { center: [44.18397145865716, 28.595090491839358], zoom: 11 },
-            "Izmir": { center: [38.60497560030166, 27.446486886485193], zoom: 8 },
+            "Izmir": { center: [38.4274666702251, 27.15412241220643], zoom: 11 },
             "Pisek": { center: [49.28765927177321, 14.167823590584321], zoom: 12 },
-            "Rijeka": { center: [44.97243541294297, 14.623684506249385], zoom: 8 },
-            "Rimini": { center: [43.96190532408524, 12.423399060233246], zoom: 10 }
+            "Rijeka": { center: [45.338554885503896, 14.424501967276987], zoom: 12 },
+            "Rimini": { center: [44.05320342546707, 12.56987993983287], zoom: 13 }
         };
+
+        let activeLayers = {};
 
         async function fetchExtents(path) {
             try {
@@ -187,23 +102,80 @@
             }
         }
 
-        let currentOverlay = null;
-
-        async function updateMapWithPng(path, pngFileName) {
-            if (currentOverlay) {
-                map.removeLayer(currentOverlay);
-            }
-
+        async function updateMapWithPng(path, subcategory, pngFileName) {
             const extents = await fetchExtents(`${path}/extents.json`);
             const extent = extents[pngFileName];
 
             if (extent) {
-                currentOverlay = L.imageOverlay(`${path}/${pngFileName}.png`, extent).addTo(map);
-                map.fitBounds(extent);
+                const layer = L.imageOverlay(`${path}/${pngFileName}.png`, extent).addTo(map);
 
-                // Apply CSS styling to render the image as pixelated
-                currentOverlay.getElement().style.imageRendering = 'pixelated';
+                layer.getElement().style.imageRendering = 'pixelated';
+
+                const layerName = `${subcategory} - ${pngFileName}`;
+                activeLayers[layerName] = layer; // Directly store the layer
+                updateActiveLayersPanel();
             }
+        }
+
+        function toggleLayer(layerName, isChecked) {
+            const { layer } = activeLayers[layerName];
+            if (isChecked) {
+                layer.addTo(map);
+            } else {
+                removeLayer(layerName);
+            }
+        }
+
+        function removeLayer(layerName) {
+            console.log(activeLayers)
+            if (activeLayers[layerName]) {
+                map.removeLayer(activeLayers[layerName].layer);
+                updateActiveLayersPanel();
+            }
+            console.log(activeLayers)
+        }
+
+        function removeAllActiveLayers() {
+            Object.keys(activeLayers).forEach(layerName => {
+                removeLayer(layerName);
+            });
+        }
+
+        // Function to show popup for opacity control
+        function showPopup(event, layerName) {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'block';
+            popup.style.top = `${event.clientY + 5}px`;
+            popup.style.left = `${event.clientX - popup.offsetWidth}px`;
+            const slider = document.getElementById('opacitySlider');
+
+            slider.oninput = function () {
+                const value = this.value;
+                const layer = activeLayers[layerName];
+
+                if (layer instanceof L.GeoJSON) {
+                    layer.eachLayer(function (featureLayer) {
+                        if (featureLayer.setStyle) {
+                            featureLayer.setStyle({ opacity: value, fillOpacity: value });
+                        }
+                    });
+                } else if (layer instanceof L.ImageOverlay) {
+                    layer.setOpacity(value);
+                }
+            };
+
+            const layer = activeLayers[layerName];
+            if (layer instanceof L.GeoJSON) {
+                slider.value = layer.options.style ? layer.options.style.opacity || 1 : 1;
+            } else if (layer instanceof L.ImageOverlay) {
+                slider.value = layer.options.opacity || 1;
+            }
+        }
+
+        // Function to hide the popup
+        function hidePopup() {
+            const popup = document.getElementById('popup');
+            popup.style.display = 'none';
         }
 
         async function fetchFolders(path) {
@@ -213,13 +185,22 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(responseText, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'));
-                const folders = links
-                    .map(link => link.textContent)
-                    .filter(name => name.endsWith('/'))
-                    .map(name => name.slice(0, -1));
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    if (contentType.includes('text/html')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(responseText, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a'));
+                        const folders = links
+                            .map(link => link.textContent)
+                            .filter(name => name.endsWith('/'))
+                            .map(name => name.slice(0, -1));
+                        return folders;
+                    } else {
+                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
+                    }
+                }
+                const folders = JSON.parse(responseText);
                 return folders;
             } catch (error) {
                 console.error('Error fetching or parsing folders:', error);
@@ -234,10 +215,19 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(responseText, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'));
-                const files = links.map(link => link.textContent);
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    if (contentType.includes('text/html')) {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(responseText, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a'));
+                        const files = links.map(link => link.textContent);
+                        return files;
+                    } else {
+                        throw new Error(`Expected JSON or HTML response, but received: ${contentType}`);
+                    }
+                }
+                const files = JSON.parse(responseText);
                 return files;
             } catch (error) {
                 console.error('Error fetching or parsing files:', error);
@@ -250,20 +240,19 @@
             options.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option;
-                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option; // Remove ".png" suffix
+                opt.textContent = option.endsWith('.png') ? option.slice(0, -4) : option;
                 dropdown.appendChild(opt);
             });
         }
 
         async function updateFolderDropdown(layerName) {
-            const folders = await fetchFolders(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${layerName}/`);
-            console.log(folders);
+            const folders = await fetchFolders(`${layerName}`);
             const dropdown = document.getElementById('folderDropdown');
             updateDropdownOptions(dropdown, folders, 'Select a category');
         }
 
         async function updateFileOrSubcategoryDropdown(path) {
-            const files = await fetchFiles(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${path}/`);
+            const files = await fetchFiles(path);
             const pngFiles = files.filter(file => file.endsWith('.png'));
             const subfolders = files.filter(file => file.endsWith('/')).map(name => name.slice(0, -1));
 
@@ -272,7 +261,7 @@
 
             const label = document.createElement('div');
             label.textContent = pngFiles.length > 0 ? 'Data' : 'Subcategory';
-            label.style.marginTop = '10px'; // Add some margin for spacing
+            label.style.marginTop = '10px';
             container.appendChild(label);
 
             const dropdown = document.createElement('select');
@@ -294,60 +283,42 @@
                     }
                 });
             }
+
+            updateActiveLayersPanel();
         }
 
         async function updatePngFilesDropdown(path) {
-            const files = await fetchFiles(`https://raw.githubusercontent.com/sklibad/re-value-project/main/${path}/`);
+            const files = await fetchFiles(path);
             const pngFiles = files.filter(file => file.endsWith('.png'));
 
             const container = document.getElementById('pngFilesDropdownContainer');
-            if (!container) {
-                const newContainer = document.createElement('div');
-                newContainer.id = 'pngFilesDropdownContainer';
-                newContainer.style.marginTop = '10px';
+            container.innerHTML = ''; // Clear previous content
 
-                const label = document.createElement('div');
-                label.textContent = 'Data';
-                newContainer.appendChild(label);
+            const label = document.createElement('div');
+            label.textContent = 'Data';
+            container.appendChild(label);
 
-                const dropdown = document.createElement('select');
-                dropdown.id = 'pngFilesDropdown';
-                updateDropdownOptions(dropdown, pngFiles.map(file => file.slice(0, -4)), 'Select data');
+            const dropdown = document.createElement('select');
+            dropdown.id = 'pngFilesDropdown';
+            updateDropdownOptions(dropdown, pngFiles.map(file => file.slice(0, -4)), 'Select data');
 
-                dropdown.addEventListener('change', function () {
-                    const selectedPngFile = this.value;
-                    if (selectedPngFile) {
-                        updateMapWithPng(path, selectedPngFile);
-                    }
-                });
+            dropdown.addEventListener('change', function () {
+                const selectedPngFile = this.value;
+                if (selectedPngFile) {
+                    const subcategory = document.getElementById('additionalDropdown').value;
+                    updateMapWithPng(path, subcategory, selectedPngFile);
+                }
+            });
 
-                newContainer.appendChild(dropdown);
-                document.getElementById('additionalDropdownContainer').appendChild(newContainer);
-            } else {
-                container.innerHTML = '';
-                const label = document.createElement('div');
-                label.textContent = 'Data';
-                container.appendChild(label);
+            container.appendChild(dropdown);
 
-                const dropdown = document.createElement('select');
-                dropdown.id = 'pngFilesDropdown';
-                updateDropdownOptions(dropdown, pngFiles.map(file => file.slice(0, -4)), 'Select data');
-
-                dropdown.addEventListener('change', function () {
-                    const selectedPngFile = this.value;
-                    if (selectedPngFile) {
-                        updateMapWithPng(path, selectedPngFile);
-                    }
-                });
-
-                container.appendChild(dropdown);
-            }
+            updateActiveLayersPanel();
         }
 
         var overlayControl = L.control({ position: 'topright' });
 
         overlayControl.onAdd = function (map) {
-            var div = L.DomUtil.create('div', 'info legend');
+            var div = L.DomUtil.create('div', 'info legend section-container');
             div.style.backgroundColor = 'white';
             div.style.padding = '10px';
             div.style.border = '2px solid #ccc';
@@ -378,7 +349,6 @@
             div.addEventListener('change', function (e) {
                 if (e.target.name === 'layer') {
                     var selectedLayer = e.target.value;
-                    console.log(selectedLayer);
 
                     for (var layerName in overlayLayers) {
                         if (overlayLayers.hasOwnProperty(layerName) && layerName !== selectedLayer) {
@@ -391,20 +361,252 @@
                         map.setView(layerViewSettings[selectedLayer].center, layerViewSettings[selectedLayer].zoom);
                     }
 
+                    removeAllActiveLayers();
+                    activeLayers = {};
                     updateFolderDropdown(selectedLayer);
+                    document.getElementById('activeLayersList').innerHTML = ''; // Clear active layers panel
+                    document.getElementById('additionalDropdownContainer').innerHTML = ''; // Clear subcategory dropdown
+                    document.getElementById('pngFilesDropdownContainer').innerHTML = ''; // Clear data dropdown
+                }
+            });
+
+            // Add the file upload button above the Active Layers section
+            var fileUploadContainer = L.DomUtil.create('div', '', div);
+            fileUploadContainer.style.marginTop = '10px';
+
+            var fileUploadButton = L.DomUtil.create('input', '', fileUploadContainer);
+            fileUploadButton.type = 'file';
+            fileUploadButton.accept = '.geojson';
+            fileUploadButton.style.width = '100%';
+
+            fileUploadButton.addEventListener('change', function (event) {
+                var file = event.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var geojson = JSON.parse(e.target.result);
+                        var layer = L.geoJSON(geojson, { style: getGeoJsonStyle() }).addTo(map);
+                        const bounds = layer.getBounds();
+                        map.fitBounds(bounds); 
+                        const layerName = `${file.name.slice(0, -8)}`;
+                        activeLayers[layerName] = layer;
+                        updateActiveLayersPanel();
+                    };
+                    reader.readAsText(file);
                 }
             });
 
             var additionalDropdownContainer = L.DomUtil.create('div', '', div);
             additionalDropdownContainer.id = 'additionalDropdownContainer';
-            additionalDropdownContainer.style.marginTop = '10px'; // Add some margin for spacing
+            additionalDropdownContainer.style.marginTop = '10px';
+
+            var pngFilesDropdownContainer = L.DomUtil.create('div', '', div);
+            pngFilesDropdownContainer.id = 'pngFilesDropdownContainer';
+            pngFilesDropdownContainer.style.marginTop = '10px';
+
+            var activeLayersContainer = L.DomUtil.create('div', '', div);
+            activeLayersContainer.id = 'activeLayersContainer';
+            activeLayersContainer.style.marginTop = '10px';
+
+            var activeLayersHeader = L.DomUtil.create('h4', '', activeLayersContainer);
+            activeLayersHeader.textContent = 'Active Layers';
+
+            var activeLayersList = L.DomUtil.create('div', '', activeLayersContainer);
+            activeLayersList.id = 'activeLayersList';
+
+            div.appendChild(additionalDropdownContainer);
+            div.appendChild(pngFilesDropdownContainer);
+            div.appendChild(activeLayersContainer);
+            div.appendChild(fileUploadContainer);
 
             return div;
+        };
+
+        const popup = document.getElementById('popup');
+        popup.onmouseover = function () {
+            popup.style.display = 'block';
+        };
+        popup.onmouseout = function () {
+            popup.style.display = 'none';
         };
 
         L.control.layers(baseLayers).addTo(map);
         overlayControl.addTo(map);
         updateFolderDropdown(Object.keys(overlayLayers)[0]);
+
+
+        // Add a custom button to create a new object
+        L.Control.NewObjectControl = L.Control.extend({
+            onAdd: function(map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                container.title = 'Create New Object';
+
+                var link = L.DomUtil.create('a', 'leaflet-draw-edit-remove', container);
+                link.href = '#';
+                link.innerHTML = '<i class="fa-solid fa-square-plus"></i>'; // Using Font Awesome icon
+
+                L.DomEvent.on(container, 'click', function (e) {
+                    L.DomEvent.stopPropagation(e);
+                    L.DomEvent.preventDefault(e);
+                    createNewObject();
+                });
+
+                return container;
+            }
+        });
+
+        function createNewObject() {
+            multipartGeoJSON = {
+                "type": "FeatureCollection",
+                "features": []
+            };
+
+            if (multipartLayer) {
+                //map.removeLayer(multipartLayer);
+            }
+
+            multipartLayer = L.geoJSON(multipartGeoJSON, { style: getGeoJsonStyle() }).addTo(map);
+
+            const layerName = `Multipart Layer ${Object.keys(activeLayers).length + 1}`;
+            activeLayers[layerName] = multipartLayer;
+            currentLayerName = layerName; // Set the current layer name to the new layer
+            updateActiveLayersPanel();
+        }
+
+        // Add the custom control to the map
+        map.addControl(new L.Control.NewObjectControl({ position: 'topleft' }));
+
+        // Add Leaflet Draw controls
+        var drawnLayers = [];
+
+        var multipartGeoJSON = {
+            "type": "FeatureCollection",
+            "features": []
+        };
+
+        // Initialize multipartLayer but do not add to map or activeLayers initially
+        var multipartLayer = L.geoJSON(multipartGeoJSON, { style: getGeoJsonStyle() });
+        var currentLayerName = '';
+
+        var drawControl = new L.Control.Draw({
+            draw: {
+                polygon: true,
+                polyline: true,
+                rectangle: true,
+                circle: false,
+                marker: true,
+                circlemarker: false
+            }
+        });
+        map.addControl(drawControl);
+
+        // Handle the creation of drawn items
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            var newFeature = layer.toGeoJSON();
+
+            // Add new feature to the current multipartGeoJSON
+            multipartGeoJSON.features.push(newFeature);
+
+            // Add new feature to the existing multipartLayer
+            multipartLayer.addData(newFeature);
+
+            // Add the drawn layer to the drawnLayers list
+            drawnLayers.push(layer);
+
+            // Ensure the layer is editable
+            layer.on('click', function () {
+                new L.EditToolbar.Edit(map, {
+                    featureGroup: new L.FeatureGroup([layer])
+                }).enable();
+            });
+
+            // Ensure the active layers panel is up-to-date
+            updateActiveLayersPanel();
+        });
+
+        // Function to update active layers panel
+        function updateActiveLayersPanel() {
+            const activeLayersList = document.getElementById('activeLayersList');
+            activeLayersList.innerHTML = '';
+            Object.keys(activeLayers).forEach(layerName => {
+                const div = document.createElement('div');
+
+                // Create a checkbox to toggle layer visibility
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = map.hasLayer(activeLayers[layerName]);
+                checkbox.onchange = function () {
+                    toggleLayer(layerName, this.checked);
+                };
+
+                // Create a label for the layer name
+                const layerLabel = document.createElement('span');
+                layerLabel.textContent = layerName;
+                layerLabel.onmouseover = function (e) {
+                    showPopup(e, layerName);
+                };
+                layerLabel.onmouseout = hidePopup;
+
+                // Add double-click event for renaming the layer
+                layerLabel.ondblclick = function () {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = layerName;
+                    input.onblur = function () {
+                        const newLayerName = input.value.trim();
+                        if (newLayerName && newLayerName !== layerName) {
+                            activeLayers[newLayerName] = activeLayers[layerName];
+                            delete activeLayers[layerName];
+                            updateActiveLayersPanel();
+                        }
+                    };
+                    input.onkeydown = function (e) {
+                        if (e.key === 'Enter') {
+                            input.blur();
+                        }
+                    };
+                    div.replaceChild(input, layerLabel);
+                    input.focus();
+                };
+
+                // Create a delete button with Font Awesome trash icon
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '<i class="fa fa-trash"></i>'; // Using Font Awesome trash icon
+                deleteButton.onclick = function () {
+                    deleteLayer(layerName);
+                };
+                deleteButton.style.background = 'none';
+                deleteButton.style.border = 'none';
+                deleteButton.style.cursor = 'pointer';
+                deleteButton.style.color = 'red';
+
+                div.appendChild(checkbox);
+                div.appendChild(layerLabel);
+                div.appendChild(deleteButton);
+                activeLayersList.appendChild(div);
+            });
+        }
+
+        // Function to toggle layer visibility
+        function toggleLayer(layerName, isChecked) {
+            const layer = activeLayers[layerName];
+            if (isChecked) {
+                layer.addTo(map);
+            } else {
+                map.removeLayer(layer);
+            }
+        }
+
+        // Function to delete a layer
+        function deleteLayer(layerName) {
+            const layer = activeLayers[layerName];
+            if (layer) {
+                map.removeLayer(layer);
+                delete activeLayers[layerName];
+                updateActiveLayersPanel();
+            }
+        }
 
     </script>
 </body>
